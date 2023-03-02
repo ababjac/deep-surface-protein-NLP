@@ -17,14 +17,12 @@ from sklearn.metrics import roc_auc_score, average_precision_score
 
 
 PATH='/lustre/isaac/proj/UTK0196/deep-surface-protein-data/'
-HOMEDIR='~/nfs/home/ababjac/deep-surface-protein-NLP'
+HOMEDIR='/lustre/isaac/scratch/ababjac/deep-surface-protein-NLP/'
 
 # In[5]:
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') # Tells the model we need to use the GPU
-print(device)
-
 
 # In[25]:
 
@@ -35,9 +33,9 @@ df = pd.read_csv(PATH+'M0059E_training_set.tsv', delimiter=',', header=0)
 # In[26]:
 
 
-df = df.sample(115000, random_state=1097253) #random set
+#df = df.sample(115000, random_state=1097253) #random set
 #df = df[(df['percent.identity'] >= 74.5) & (df['percent.identity'] < 89.6)] #middle set
-#df = df[(df['percent.identity'] >= 89.6) | (df['percent.identity'] < 74.5)] #edge set
+df = df[(df['percent.identity'] >= 89.6) | (df['percent.identity'] < 74.5)] #edge set
 
 
 # In[27]:
@@ -136,16 +134,16 @@ model = EsmForSequenceClassification.from_pretrained("facebook/esm2_t6_8M_UR50D"
 
 
 training_args = TrainingArguments(
-    output_dir=HOMEDIR+'/ESM-random',
+    output_dir=HOMEDIR+'/ESM-edges',
     learning_rate=2e-4,
-    per_device_train_batch_size=4,
-    per_device_eval_batch_size=4,
+    per_device_train_batch_size=16,
+    per_device_eval_batch_size=16,
     num_train_epochs=3,
     weight_decay=0.01,
-    evaluation_strategy='steps',
-    eval_steps=100,
-    gradient_accumulation_steps=100,
-    fp16=True if torch.cuda.is_available() else False,
+    #evaluation_strategy='steps',
+    #eval_steps=100,
+    #gradient_accumulation_steps=100,
+    fp16=True,
 )
 
 trainer = Trainer(
@@ -180,7 +178,7 @@ out = trainer.predict(test_dataset=test_ds)
 
 
 scores = compute_metrics(out)
-with open(HOMEDIR+'ESM-random-test.txt','w') as data: 
+with open(HOMEDIR+'ESM-edges-test.txt','w') as data: 
       data.write(str(scores))
 
 

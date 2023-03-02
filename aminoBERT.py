@@ -17,15 +17,13 @@ from sklearn.metrics import roc_auc_score, average_precision_score
 
 
 PATH='/lustre/isaac/proj/UTK0196/deep-surface-protein-data/'
-HOMEDIR='~/nfs/home/ababjac/deep-surface-protein-NLP'
+HOMEDIR='/lustre/isaac/scratch/ababjac/deep-surface-protein-NLP/'
 
 
 # In[3]:
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu') # Tells the model we need to use the GPU
-print(device)
-
 
 # In[4]:
 
@@ -36,9 +34,9 @@ df = pd.read_csv(PATH+'M0059E_training_set.tsv', delimiter=',', header=0)
 # In[ ]:
 
 
-df = df.sample(115000, random_state=1097253) #random set
+#df = df.sample(115000, random_state=1097253) #random set
 #df = df[(df['percent.identity'] >= 74.5) & (df['percent.identity'] < 89.6)] #middle set
-#df = df[(df['percent.identity'] >= 89.6) | (df['percent.identity'] < 74.5)] #edge set
+df = df[(df['percent.identity'] >= 89.6) | (df['percent.identity'] < 74.5)] #edge set
 
 
 # In[4]:
@@ -147,11 +145,11 @@ model = AutoModelForSequenceClassification.from_pretrained("distilbert-base-unca
 
 
 training_args = TrainingArguments(
-    output_dir=HOMEDIR+'/BERT-middle',
+    output_dir=HOMEDIR+'/BERT-edges',
     learning_rate=2e-5,
     per_device_train_batch_size=32,
     per_device_eval_batch_size=32,
-    num_train_epochs=5,
+    num_train_epochs=3,
     weight_decay=0.01,
 )
 
@@ -187,7 +185,7 @@ out = trainer.predict(test_dataset=test_ds)
 
 
 scores = compute_metrics(out)
-with open(HOMEDIR+'BERT-middle-test.txt','w') as data: 
+with open(HOMEDIR+'BERT-edges-test.txt','w') as data: 
       data.write(str(scores))
 
 
