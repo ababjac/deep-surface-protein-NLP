@@ -17,7 +17,6 @@ from sklearn.metrics import roc_auc_score, average_precision_score
 
 
 PATH='/lustre/isaac/proj/UTK0196/deep-surface-protein-data/'
-HOMEDIR='/lustre/isaac/scratch/ababjac/deep-surface-protein-NLP/'
 
 
 # In[3]:
@@ -36,7 +35,7 @@ df = pd.read_csv(PATH+'M0059E_training_set.tsv', delimiter=',', header=0)
 
 #df = df.sample(115000, random_state=1097253) #random set
 #df = df[(df['percent.identity'] >= 74.5) & (df['percent.identity'] < 89.6)] #middle set
-df = df[(df['percent.identity'] >= 89.6) | (df['percent.identity'] < 74.5)] #edge set
+#df = df[(df['percent.identity'] >= 89.6) | (df['percent.identity'] < 74.5)] #edge set
 
 
 # In[4]:
@@ -60,11 +59,21 @@ df = df[(df['percent.identity'] >= 89.6) | (df['percent.identity'] < 74.5)] #edg
 # In[5]:
 
 
-surf_series = df['surf.sequence']
-deep_series = df['deep.sequence']
+df_train, df_test = train_test_split(df, test_size=0.2, random_state=1234)
+df_train, df_val = train_test_split(df_train, test_size=0.1, random_state=1234)
 
-classification_df = pd.DataFrame({'text' : surf_series.append(deep_series, ignore_index=True), 'label' : [0]*surf_series.size+[1]*deep_series.size})
-#classification_df
+surf_series_train = df_train['surf.sequence']
+deep_series_train = df_train['deep.sequence']
+
+surf_series_val = df_val['surf.sequence']
+deep_series_val = df_val['deep.sequence']
+
+surf_series_test = df_test['surf.sequence']
+deep_series_test = df_test['deep.sequence']
+
+classification_df_train = pd.DataFrame({'text' : surf_series_train.append(deep_series_train, ignore_index=True), 'label' : [0]*surf_series_train.size+[1]*deep_series_train.size})
+classification_df_val = pd.DataFrame({'text' : surf_series_val.append(deep_series_val, ignore_index=True), 'label' : [0]*surf_series_val.size+[1]*deep_series_val.size})
+classification_df_test = pd.DataFrame({'text' : surf_series_test.append(deep_series_test, ignore_index=True), 'label' : [0]*surf_series_test.size+[1]*deep_series_test.size})
 
 
 # In[6]:
@@ -100,14 +109,19 @@ def compute_metrics(epred):
 # In[7]:
 
 
-classification_df['text'] = classification_df['text'].transform(get_overlap_string)
+classification_df_train['text'] = classification_df_train['text'].transform(get_overlap_string)
+classification_df_val['text'] = classification_df_val['text'].transform(get_overlap_string)
+classification_df_test['text'] = classification_df_test['text'].transform(get_overlap_string)
+med_len = int(np.median([len(elem) for elem in classification_df_train['text']]))
 #classification_df
 
 
 # In[8]:
 
 
-ds = Dataset.from_pandas(classification_df)
+ds_train = Dataset.from_pandas(classification_df_train)
+ds_val = Dataset.from_pandas(classification_df_val)
+ds_test = Dataset.from_pandas(classification_df_test)
 
 
 # In[9]:
@@ -119,7 +133,9 @@ tokenizer = AutoTokenizer.from_pretrained("distilbert-base-uncased")
 # In[10]:
 
 
-tokenized_ds = ds.map(lambda d : tokenizer(d['text'], truncation=True), batched=True)
+tokenized_ds_train = ds_train.map(lambda d : tokenizer(d['text'], truncation=True, padding=True), batched=True)
+tokenized_ds_val = ds_val.map(lambda d : tokenizer(d['text'], truncation=True, padding=True), batched=True)
+tokenized_ds_test = ds_test.map(lambda d : tokenizer(d['text'], truncation=True, padding=True), batched=True)
 
 
 # In[11]:
@@ -145,19 +161,19 @@ model = AutoModelForSequenceClassification.from_pretrained("distilbert-base-unca
 
 
 training_args = TrainingArguments(
-    output_dir=HOMEDIR+'/BERT-edges',
-    learning_rate=2e-5,
+    output_dir='./base-BERT',
+    learning_rate=2e-4,
     per_device_train_batch_size=32,
     per_device_eval_batch_size=32,
-    num_train_epochs=3,
+    num_train_epochs=10,
     weight_decay=0.01,
 )
 
 trainer = Trainer(
     model=model,
     args=training_args,
-    train_dataset=train_ds,
-    eval_dataset=val_ds,
+    train_dataset=tokenized_ds_train,
+    eval_dataset=tokenized_ds_val,
     tokenizer=tokenizer,
     #data_collator=data_collator,
 )
@@ -178,16 +194,16 @@ trainer.evaluate()
 # In[18]:
 
 
-out = trainer.predict(test_dataset=test_ds)
+out = trainer.predict(test_dataset=tokenized_ds_test)
 
 
 # In[19]:
 
 
 scores = compute_metrics(out)
-with open(HOMEDIR+'BERT-edges-test.txt','w') as data: 
+with open('./results/base-BERT-scores.txt','w') as data: 
       data.write(str(scores))
-
+print(scores)
 
 # In[ ]:
 
