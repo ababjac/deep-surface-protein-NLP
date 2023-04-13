@@ -87,7 +87,7 @@ for train_inds, test_inds in inds[split_no]:
     tokenized_ds_test = ds_test.map(lambda d : tokenizer(d['text'], truncation=True, padding=True), batched=True)
 
     print('Building Model...')
-    model = AutoModelForSequenceClassification.from_pretrained('./test-models/BERT-random/checkpoint-14500', num_labels=2)
+    model = AutoModelForSequenceClassification.from_pretrained('distilbert-base-uncased', num_labels=2)
 
     training_args = TrainingArguments(
         output_dir='./models/custom-model-overlap-5_2_{}'.format(RUN),
