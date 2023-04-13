@@ -101,10 +101,10 @@ model = AutoModelForSequenceClassification.from_pretrained('./test-models/BERT-r
 
 training_args = TrainingArguments(
     output_dir='./models/custom-model-overlap-5_2',
-    learning_rate=2e-4,
+    learning_rate=2e-3,
     per_device_train_batch_size=64,
     per_device_eval_batch_size=64,
-    num_train_epochs=50,
+    num_train_epochs=10,
     weight_decay=0.01,
 )
 

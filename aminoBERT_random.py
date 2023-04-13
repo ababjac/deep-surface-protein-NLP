@@ -4,12 +4,12 @@ import torch
 import pickle
 
 from datasets import Dataset
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, TrainingArguments, Trainer, BertConfig
+from transformers import AutoTokenizer, AutoModelForSequenceClassification, TrainingArguments, Trainer, AutoConfig
 from sklearn.metrics import roc_auc_score, average_precision_score
 from sklearn.model_selection import train_test_split
 
 PATH='/lustre/isaac/proj/UTK0196/deep-surface-protein-data/'
-config = BertConfig.from_pretrained('distilbert-base-uncased')
+config = AutoConfig.from_pretrained('distilbert-base-uncased')
 
 
 def overlap_sequence(seq, word_length, overlap):
@@ -57,13 +57,13 @@ for train_inds, test_inds in inds[split_no]:
     train_set, val_set = train_test_split(train_set, test_size=0.1, random_state=1234)
     
     train_seqs_list = train_set['surf.sequence'].tolist() + train_set['deep.sequence'].tolist()
-    train_seqs_labels = np.concatenate([np.zeros(train_set.shape[0]), np.ones(train_set.shape[0])])
+    train_seqs_labels = np.concatenate([np.zeros(train_set.shape[0], dtype=int), np.ones(train_set.shape[0], dtype=int)])
     
     val_seqs_list = val_set['surf.sequence'].tolist() + val_set['deep.sequence'].tolist()
-    val_seqs_labels = np.concatenate([np.zeros(val_set.shape[0]), np.ones(val_set.shape[0])])
+    val_seqs_labels = np.concatenate([np.zeros(val_set.shape[0], dtype=int), np.ones(val_set.shape[0], dtype=int)])
     
     test_seqs_list = test_set['surf.sequence'].tolist() + test_set['deep.sequence'].tolist()
-    test_seqs_labels = np.concatenate([np.zeros(test_set.shape[0]), np.ones(test_set.shape[0])])
+    test_seqs_labels = np.concatenate([np.zeros(test_set.shape[0], dtype=int), np.ones(test_set.shape[0], dtype=int)])
     
     classification_df_train = pd.DataFrame({'text' : train_seqs_list, 'label' : train_seqs_labels})
     classification_df_val = pd.DataFrame({'text' : val_seqs_list, 'label' : val_seqs_labels})
@@ -80,21 +80,21 @@ for train_inds, test_inds in inds[split_no]:
 
 
     print('Tokenizing...')
-    tokenizer = AutoTokenizer(config)
+    tokenizer = AutoTokenizer.from_pretrained('distilbert-base-uncased') #instantiate tokenizer
 
     tokenized_ds_train = ds_train.map(lambda d : tokenizer(d['text'], truncation=True, padding=True), batched=True)
     tokenized_ds_val = ds_val.map(lambda d : tokenizer(d['text'], truncation=True, padding=True), batched=True)
     tokenized_ds_test = ds_test.map(lambda d : tokenizer(d['text'], truncation=True, padding=True), batched=True)
 
     print('Building Model...')
-    model = AutoModelForSequenceClassification(config)
+    model = AutoModelForSequenceClassification.from_config(config) #instantiate model without pretrained weights
 
     training_args = TrainingArguments(
         output_dir='./models/custom-model-random_{}'.format(RUN),
-        learning_rate=2e-4,
-        per_device_train_batch_size=64,
-        per_device_eval_batch_size=64,
-        num_train_epochs=50,
+        learning_rate=2e-3,
+        per_device_train_batch_size=32,
+        per_device_eval_batch_size=32,
+        num_train_epochs=10,
         weight_decay=0.01,
     )
 
