@@ -92,7 +92,7 @@ for train_inds, test_inds in inds[split_no]:
 
     training_args = TrainingArguments(
         output_dir='./models/custom-model-combo_{}'.format(RUN),
-        learning_rate=2e-3,
+        learning_rate=2e-4,
         per_device_train_batch_size=32,
         per_device_eval_batch_size=32,
         num_train_epochs=10,
