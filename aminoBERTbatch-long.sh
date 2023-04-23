@@ -5,7 +5,7 @@
 #SBATCH --gpus=1
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=4
-#SBATCH --time=5-00:00:00
+#SBATCH --time=6-00:00:00
 #SBATCH -e ./jobs/myjob.e%j
 #SBATCH -o ./jobs/myjob.o%j 
 #SBATCH --mail-type=ALL
@@ -13,5 +13,5 @@
 
 cd $SLURM_SUBMIT_DIR
 source $SCRATCHDIR/pyvenv/bin/activate
-python aminoBERT_combo.py
+python aminoBERT_pairs.py
 

@@ -1,11 +1,11 @@
 #!/bin/bash
-#SBATCH -A ACF-UTK0011
-#SBATCH --partition=campus-gpu
-#SBATCH --qos=campus-gpu
+#SBATCH -A ISAAC-UTK0196
+#SBATCH --partition=condo-semrich-temp
+#SBATCH --qos=condo
 #SBATCH --gpus=1
 #SBATCH --nodes=1
-#SBATCH --ntasks-per-node=8 
-#SBATCH --time=12:00:00
+#SBATCH --ntasks-per-node=4
+#SBATCH --time=2-00:00:00
 #SBATCH -e ./jobs/myjob.e%j
 #SBATCH -o ./jobs/myjob.o%j 
 #SBATCH --mail-type=ALL

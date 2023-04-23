@@ -87,19 +87,19 @@ for train_inds, test_inds in inds[split_no]:
     tokenized_ds_test = ds_test.map(lambda d : tokenizer(d['text'], truncation=True, padding=True), batched=True)
 
     print('Building Model...')
-    model = AutoModelForSequenceClassification.from_pretrained('distilbert-base-uncased', num_labels=2)
+    model1 = AutoModelForSequenceClassification.from_pretrained('distilbert-base-uncased', num_labels=2)
 
     training_args = TrainingArguments(
-        output_dir='./models/custom-model-overlap-4_1_{}'.format(RUN),
+        output_dir='./models/custom-model-gen-overlap-4_1_{}'.format(RUN),
         learning_rate=2e-4,
-        per_device_train_batch_size=64,
-        per_device_eval_batch_size=64,
-        num_train_epochs=10,
+        per_device_train_batch_size=32,
+        per_device_eval_batch_size=32,
+        num_train_epochs=5,
         weight_decay=0.01,
     )
 
     trainer = Trainer(
-        model=model,
+        model=model1,
         args=training_args,
         train_dataset=tokenized_ds_train,
         eval_dataset=tokenized_ds_val,
@@ -110,10 +110,37 @@ for train_inds, test_inds in inds[split_no]:
     print('Training...')
     trainer.train()
     trainer.evaluate()
+
+    print('Building Model...')
+    model2 = AutoModelForSequenceClassification.from_pretrained('./models/custom-model-gen-overlap-4_1_{}/checkpoint-50000'.format(RUN), num_labels=2)
+
+    training_args = TrainingArguments(
+        output_dir='./models/custom-model-fine-overlap-4_1_{}'.format(RUN),
+        learning_rate=2e-5,
+        per_device_train_batch_size=32,
+        per_device_eval_batch_size=32,
+        num_train_epochs=2,
+        weight_decay=0.01,
+        #load_best_model_at_end=True
+    )
+
+    trainer = Trainer(
+        model=model2,
+        args=training_args,
+        train_dataset=tokenized_ds_train,
+        eval_dataset=tokenized_ds_val,
+        tokenizer=tokenizer,
+    )
+
+
+    print('Training...')
+    trainer.train()
+    trainer.evaluate()
+
     out = trainer.predict(test_dataset=tokenized_ds_test)
 
     scores = compute_metrics(out)
-    with open('./results/BERT-custom-4_1-scores_{}.txt'.format(RUN),'w') as data: 
+    with open('./results/BERT-custom-DT-4_1-scores_{}.txt'.format(RUN),'w') as data: 
         data.write(str(scores))
 
     RUN += 1
