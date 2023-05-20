@@ -1,11 +1,11 @@
 #!/bin/bash
-#SBATCH -A ISAAC-UTK0196
-#SBATCH --partition=condo-semrich-temp
-#SBATCH --qos=condo
+#SBATCH -A ACF-UTK0011
+#SBATCH --partition=campus-gpu-bigmem
+#SBATCH --qos=campus-gpu
 #SBATCH --gpus=1
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=4
-#SBATCH --time=6-00:00:00
+#SBATCH --time=24:00:00
 #SBATCH -e ./jobs/myjob.e%j
 #SBATCH -o ./jobs/myjob.o%j 
 #SBATCH --mail-type=ALL
@@ -13,5 +13,5 @@
 
 cd $SLURM_SUBMIT_DIR
 source $SCRATCHDIR/pyvenv/bin/activate
-python aminoBERT_pairs.py
+python drbert-copy.py
 
